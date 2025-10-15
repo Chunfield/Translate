@@ -1,3 +1,7 @@
+// src/content/tooltip.ts
+
+import { speakText } from './speech'; // ✅ 引入语音功能
+
 let tooltip: HTMLElement | null = null;
 
 export function showTooltip(text: string, translation: string) {
@@ -16,15 +20,30 @@ export function showTooltip(text: string, translation: string) {
     z-index: 10000;
     max-width: 300px;
     word-break: break-word;
-    pointer-events: none;
+    pointer-events: auto; /* ✅ 改为 auto，否则按钮无法点击 */
     opacity: 0;
     transition: opacity 0.2s;
   `;
 
+  // ✅ 添加语音按钮（🔊）
   tooltip.innerHTML = `
-    <div><strong>${text}</strong></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+      <strong>${text}</strong>
+      <button data-action="speak" 
+              style="background: none; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 0 4px;"
+              title="朗读原文">
+        🔊
+      </button>
+    </div>
     <div style="margin-top: 4px; opacity: 0.9;">${translation}</div>
   `;
+
+  // ✅ 绑定语音播放事件
+  const speakButton = tooltip.querySelector('[data-action="speak"]');
+  speakButton?.addEventListener('click', e => {
+    e.stopPropagation(); // 防止触发 hideTooltip
+    speakText(text); // 播放原文
+  });
 
   document.body.appendChild(tooltip);
 
