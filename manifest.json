@@ -4,6 +4,11 @@
   "version": "0.0.1",
   "description": "选中单词后快速翻译",
   "permissions": ["activeTab"],
+  "icons": {
+    "16": "src/assets/icon/icon_16x16.png",
+    "48": "src/assets/icon/icon_48x48.png",
+    "128": "src/assets/icon/icon_128x128.png"
+  },
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "划词翻译"
