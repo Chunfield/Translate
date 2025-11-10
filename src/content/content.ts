@@ -1,46 +1,106 @@
 // src/content/content.ts
 
+import type { TranslationResult } from './translator'; // ✅ 使用 type import
 import { translateText } from './translator';
 import { showTooltip, hideTooltip } from './tooltip';
 
-/**
- * 防抖函数
- */
-function debounce<T extends (...args: unknown[]) => void>(
-  fn: T,
-  delay: number
-) {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-
-  return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
+// ✅ 定义缺失的函数
+function removeTranslateIcon() {
+  const icon = document.getElementById('translator-icon');
+  if (icon) icon.remove();
 }
 
-/**
- * 划词翻译主函数
- */
-const translateSelection = debounce(async () => {
-  const text = window.getSelection()?.toString().trim();
-  if (!text || text.length < 1) {
+async function handleTranslationRequest() {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
     hideTooltip();
+    removeTranslateIcon();
+    return;
+  }
+
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  const text = selection.toString().trim();
+
+  if (!text) {
+    hideTooltip();
+    removeTranslateIcon();
     return;
   }
 
   try {
-    const result = await translateText(text, 'zh'); // 翻译成中文
-    showTooltip(text, result.text);
-  } catch (err) {
-    console.error('[划词翻译] 翻译失败', err);
-    showTooltip(text, '翻译失败');
+    const result = await translateText(text, 'zh');
+
+    // ✅ 改为返回 Promise 的普通函数，避免 require-await
+    const loadDetails = (): Promise<void> => {
+      return new Promise(resolve => {
+        const detailPanel = document.querySelector(
+          '#translator-tooltip .detail-panel'
+        ) as HTMLElement;
+
+        if (!result.posEntries || result.posEntries.length === 0) {
+          detailPanel.textContent = '暂无详细解释';
+          resolve();
+          return;
+        }
+
+        detailPanel.innerHTML = '';
+
+        for (const item of result.posEntries) {
+          const group = document.createElement('div');
+          group.style.marginBottom = '6px';
+
+          const pos = document.createElement('div');
+          pos.style.color = '#88c';
+          pos.textContent = item.pos;
+          group.appendChild(pos);
+
+          const def = document.createElement('div');
+          def.textContent = item.definition;
+          group.appendChild(def);
+
+          if (item.examples.length > 0) {
+            const exTitle = document.createElement('div');
+            exTitle.style.color = '#ccc';
+            exTitle.style.fontSize = '12px';
+            exTitle.textContent = '例句:';
+            group.appendChild(exTitle);
+
+            for (const example of item.examples) {
+              const ex = document.createElement('div');
+              ex.style.marginLeft = '10px';
+              ex.style.fontSize = '12px';
+              ex.style.color = '#ddd';
+              ex.textContent = example;
+              group.appendChild(ex);
+            }
+          }
+
+          if (item.synonyms.length > 0) {
+            const syn = document.createElement('div');
+            syn.style.fontSize = '12px';
+            syn.style.color = '#aaa';
+            syn.textContent = '同义词: ' + item.synonyms.slice(0, 3).join(', ');
+            group.appendChild(syn);
+          }
+
+          detailPanel.appendChild(group);
+        }
+
+        resolve();
+      });
+    };
+
+    removeTranslateIcon();
+    showTooltip(text, result.text, rect, loadDetails);
+  } catch {
+    console.error('[划词翻译] 翻译失败');
+    removeTranslateIcon();
+    showTooltip(text, '翻译失败', rect);
   }
-}, 300);
+}
 
-// 监听鼠标松开事件
-document.addEventListener('mouseup', translateSelection);
-
-// 可选：点击页面其他地方隐藏 Tooltip
-document.addEventListener('click', () => {
-  hideTooltip();
+// ✅ 注册事件，让函数被“使用”
+document.addEventListener('mouseup', () => {
+  setTimeout(handleTranslationRequest, 50); // 延迟确保 selection 更新完成
 });

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "划词翻译",
+  "name": "传灵译",
+  "short_name": "Tranlineate",
   "version": "0.0.1",
-  "description": "选中单词后快速翻译",
-  "permissions": ["activeTab"],
+  "description": "划词即译，灵应随行。选中文字，秒出翻译。",
   "icons": {
     "16": "src/assets/icon/icon_16x16.png",
     "48": "src/assets/icon/icon_48x48.png",
