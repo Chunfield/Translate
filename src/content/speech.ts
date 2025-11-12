@@ -1,5 +1,3 @@
-// src/content/speech.ts
-
 /**
  * 使用 Web Speech API 播放语音
  * @param text 要朗读的文本

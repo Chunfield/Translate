@@ -1,6 +1,5 @@
 // src/content/content.ts
 
-import type { TranslationResult } from './translator'; // ✅ 使用 type import
 import { translateText } from './translator';
 import { showTooltip, hideTooltip } from './tooltip';
 
